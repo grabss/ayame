@@ -31,5 +31,5 @@ type unregister struct {
 type knock struct {
 	connection *connection
 	knockID string
-	resultChannel chan int
+	resultChannel chan bool
 }

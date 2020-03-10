@@ -34,7 +34,7 @@ type knockMessage struct {
 
 type replyMessage struct {
 	Type string `json:"type"`
-	Result int `json:"result"`
+	Result bool `json:"result"`
 }
 
 type acceptMessage struct {

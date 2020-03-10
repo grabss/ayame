@@ -1,5 +1,6 @@
 package main
-import("strconv")
+
+import "regexp"
 
 var (
 	// register/unregister は待たせる
@@ -78,10 +79,22 @@ func server() {
 				}
 			}
 		case knock := <-knockChannel:
-			// c := knock.connection
+			c := knock.connection
 			rch := knock.resultChannel
-			hoge, _ := strconv.Atoi(knock.knockID)
-			rch <- hoge
+
+			// roomID検索の場合(d-d)
+			c.debugLog().Msg(knock.knockID)
+			if match, _ := regexp.MatchString("^\\d{1,}-\\d{1,}$", knock.knockID); match {
+				_, ok := m[knock.knockID]
+				rch <- ok
+			} else if match, _ := regexp.MatchString("^\\d{1,}$", knock.knockID); match {
+				rch <- false
+			} else {
+				rch <- false
+			}
+			// for k, _ := range m {
+			// 	c.debugLog().Msg(k)
+			// }
 		}
 	}
 }

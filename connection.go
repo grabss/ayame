@@ -110,7 +110,7 @@ func (c *connection) sendByeMessage() error {
 	return nil
 }
 
-func (c *connection) sendReplyMessage(result int) error {
+func (c *connection) sendReplyMessage(result bool) error {
 	msg := &replyMessage{
 		Type: "reply",
 		Result: result,
@@ -156,8 +156,8 @@ func (c *connection) forward(msg []byte) {
 	}
 }
 
-func (c *connection) knock(knockID string) int {
-	resultChannel := make(chan int)
+func (c *connection) knock(knockID string) bool {
+	resultChannel := make(chan bool)
 	knockChannel <- knock{
 		connection: c,
 		resultChannel: resultChannel,
