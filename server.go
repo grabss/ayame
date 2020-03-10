@@ -1,6 +1,9 @@
 package main
 
-import "regexp"
+import (
+	"regexp"
+	"strings"
+)
 
 var (
 	// register/unregister は待たせる
@@ -79,22 +82,28 @@ func server() {
 				}
 			}
 		case knock := <-knockChannel:
-			c := knock.connection
 			rch := knock.resultChannel
-
-			// roomID検索の場合(d-d)
-			c.debugLog().Msg(knock.knockID)
-			if match, _ := regexp.MatchString("^\\d{1,}-\\d{1,}$", knock.knockID); match {
-				_, ok := m[knock.knockID]
-				rch <- ok
-			} else if match, _ := regexp.MatchString("^\\d{1,}$", knock.knockID); match {
-				rch <- false
-			} else {
-				rch <- false
+			var result = false
+			if rm, _ := regexp.MatchString("^\\d{1,}-\\d{1,}$", knock.knockID); rm {
+				// roomID検索の場合(d-d)
+				// -> 純粋なIndex検索で判定
+				_, result = m[knock.knockID]
+			} else if rm, _ := regexp.MatchString("^\\d{1,}$", knock.knockID); rm {
+				// clientID検索の場合(d)
+				// -> 登録済みのroomIDを回しd-dのみ検索対象にした上でハイフンでsplitし両方のclientIDで判定
+				loopRooms:
+					for k, _ := range m {
+						if km, _ := regexp.MatchString("^\\d{1,}-\\d{1,}$", k); km {
+							for _, v := range strings.Split(k, "-") {
+								if v == knock.knockID {
+									result = true
+									break loopRooms
+								}
+							}
+						}
+					}
 			}
-			// for k, _ := range m {
-			// 	c.debugLog().Msg(k)
-			// }
+			rch <- result
 		}
 	}
 }
