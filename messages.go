@@ -27,3 +27,9 @@ type forward struct {
 type unregister struct {
 	connection *connection
 }
+
+type knock struct {
+	connection *connection
+	knockID string
+	resultChannel chan int
+}

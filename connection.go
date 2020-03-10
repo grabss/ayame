@@ -110,6 +110,18 @@ func (c *connection) sendByeMessage() error {
 	return nil
 }
 
+func (c *connection) sendReplyMessage(result int) error {
+	msg := &replyMessage{
+		Type: "reply",
+		Result: result,
+	}
+
+	if err := c.SendJSON(msg); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (c *connection) closeWs() {
 	c.wsConn.Close()
 	c.debugLog().Msg("CLOSED-WS")
@@ -142,6 +154,18 @@ func (c *connection) forward(msg []byte) {
 		connection: c,
 		rawMessage: msg,
 	}
+}
+
+func (c *connection) knock(knockID string) int {
+	resultChannel := make(chan int)
+	knockChannel <- knock{
+		connection: c,
+		resultChannel: resultChannel,
+		knockID: knockID,
+	}
+	result := <-resultChannel
+	close(resultChannel)
+	return result
 }
 
 func (c *connection) main(cancel context.CancelFunc, messageChannel chan []byte) {
@@ -258,6 +282,16 @@ func (c *connection) handleWsMessage(rawMessage []byte, pongTimeoutTimer *time.T
 	case "pong":
 		timerStop(pongTimeoutTimer)
 		pongTimeoutTimer.Reset(pongTimeout * time.Second)
+	case "knock":
+		knockMessage := &knockMessage{}
+		if err := json.Unmarshal(rawMessage, &knockMessage); err != nil {
+			c.errLog().Err(err).Bytes("rawMessage", rawMessage).Msg("InvalidKnockMessageJSON")
+			return errInvalidJSON
+		}
+		result := c.knock(knockMessage.KnockID)
+		if err := c.sendReplyMessage(result); err != nil {
+			c.errLog().Err(err).Msg("FailedSendReplyMessage")
+		}
 	case "register":
 		// すでに登録されているのにもう一度登録しに来た
 		if c.registered {

@@ -27,6 +27,16 @@ type byeMessage struct {
 	Type string `json:"type"`
 }
 
+type knockMessage struct {
+	Type string `json:"type"`
+	KnockID string `json:"knockId"`
+}
+
+type replyMessage struct {
+	Type string `json:"type"`
+	Result int `json:"result"`
+}
+
 type acceptMessage struct {
 	Type         string `json:"type"`
 	ConnectionID string `json:"connectionId"`

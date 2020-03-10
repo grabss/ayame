@@ -1,4 +1,5 @@
 package main
+import("strconv")
 
 var (
 	// register/unregister は待たせる
@@ -6,6 +7,7 @@ var (
 	unregisterChannel = make(chan *unregister)
 	// ブロックされたくないので 100 に設定
 	forwardChannel = make(chan forward, 100)
+	knockChannel = make(chan knock, 100)
 )
 
 // roomId がキーになる
@@ -75,6 +77,11 @@ func server() {
 					}
 				}
 			}
+		case knock := <-knockChannel:
+			// c := knock.connection
+			rch := knock.resultChannel
+			hoge, _ := strconv.Atoi(knock.knockID)
+			rch <- hoge
 		}
 	}
 }
